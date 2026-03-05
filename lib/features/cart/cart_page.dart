@@ -81,22 +81,37 @@ class CartPage extends ConsumerWidget {
                       .read(authRepositoryProvider)
                       .getUserProfile();
                   if (!context.mounted) return;
-                  final phone = (profile['phone'] as String?)?.trim() ?? '';
+                  final fullName =
+                      (profile['fullName'] as String?)?.trim() ?? '';
                   final whatsapp =
                       (profile['whatsapp'] as String?)?.trim() ?? '';
                   final address =
                       (profile['shippingAddress'] as String?)?.trim() ?? '';
-                  if (phone.isEmpty || whatsapp.isEmpty || address.isEmpty) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Completa teléfono, WhatsApp y dirección en “Mi cuenta” antes de hacer un pedido.',
-                        ),
-                      ),
+                  if (fullName.isEmpty || whatsapp.isEmpty || address.isEmpty) {
+                    final go = await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Completa tus datos'),
+                          content: const Text(
+                            'Antes de adjuntar tu comprobante necesitamos tu nombre, WhatsApp y dirección de envío. Te llevaré a “Mi cuenta” para completarlos.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Ahora no'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Ir a Mi cuenta'),
+                            ),
+                          ],
+                        );
+                      },
                     );
-                    if (!context.mounted) return;
-                    Navigator.of(context).popUntil((r) => r.isFirst);
+                    if (go == true && context.mounted) {
+                      Navigator.of(context).popUntil((r) => r.isFirst);
+                    }
                     return;
                   }
 
@@ -137,7 +152,7 @@ class CartPage extends ConsumerWidget {
                               if (v.isEmpty) return;
                               Navigator.pop(context, true);
                             },
-                            child: const Text('Confirmar y enviar'),
+                            child: const Text('Adjuntar comprobante y pedir'),
                           ),
                         ],
                       );

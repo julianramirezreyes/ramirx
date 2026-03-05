@@ -76,15 +76,19 @@ class AuthRepository {
   }
 
   Future<Map<String, dynamic>> updateUserProfile({
+    String? fullName,
     String? phone,
     String? whatsapp,
+    String? whatsappAlt,
     String? shippingAddress,
   }) async {
     final res = await _dio.patch<Map<String, dynamic>>(
       '/users/me',
       data: {
+        if (fullName != null) 'fullName': fullName,
         if (phone != null) 'phone': phone,
         if (whatsapp != null) 'whatsapp': whatsapp,
+        if (whatsappAlt != null) 'whatsappAlt': whatsappAlt,
         if (shippingAddress != null) 'shippingAddress': shippingAddress,
       },
     );

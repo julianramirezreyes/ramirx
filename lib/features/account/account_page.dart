@@ -67,11 +67,14 @@ class AccountPage extends ConsumerWidget {
               .watch(userProfileProvider)
               .when(
                 data: (profile) {
-                  final phoneCtrl = TextEditingController(
-                    text: profile['phone'] as String?,
+                  final fullNameCtrl = TextEditingController(
+                    text: profile['fullName'] as String?,
                   );
                   final whatsappCtrl = TextEditingController(
                     text: profile['whatsapp'] as String?,
+                  );
+                  final whatsappAltCtrl = TextEditingController(
+                    text: profile['whatsappAlt'] as String?,
                   );
                   final addressCtrl = TextEditingController(
                     text: profile['shippingAddress'] as String?,
@@ -91,9 +94,10 @@ class AccountPage extends ConsumerWidget {
                           ),
                           const SizedBox(height: 12),
                           TextField(
-                            controller: phoneCtrl,
+                            controller: fullNameCtrl,
                             decoration: const InputDecoration(
-                              labelText: 'Teléfono de contacto',
+                              labelText: 'Nombre completo',
+                              hintText: 'Ej: Juan Pérez',
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -101,6 +105,15 @@ class AccountPage extends ConsumerWidget {
                             controller: whatsappCtrl,
                             decoration: const InputDecoration(
                               labelText: 'WhatsApp',
+                              hintText: 'Ej: +57 300 000 0000',
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: whatsappAltCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'WhatsApp de contacto (Opcional)',
+                              hintText: 'Ej: +57 301 000 0000',
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -108,6 +121,8 @@ class AccountPage extends ConsumerWidget {
                             controller: addressCtrl,
                             decoration: const InputDecoration(
                               labelText: 'Dirección completa de envío',
+                              hintText:
+                                  'Ciudad, dirección, casa/apto/conjunto, barrio y detalles adicionales',
                             ),
                             maxLines: 3,
                           ),
@@ -120,8 +135,10 @@ class AccountPage extends ConsumerWidget {
                                   await ref
                                       .read(authRepositoryProvider)
                                       .updateUserProfile(
-                                        phone: phoneCtrl.text.trim(),
+                                        fullName: fullNameCtrl.text.trim(),
                                         whatsapp: whatsappCtrl.text.trim(),
+                                        whatsappAlt: whatsappAltCtrl.text
+                                            .trim(),
                                         shippingAddress: addressCtrl.text
                                             .trim(),
                                       );

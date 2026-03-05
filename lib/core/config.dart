@@ -1,7 +1,7 @@
 class AppConfig {
   static const String apiBaseUrl = String.fromEnvironment(
     'RAMIRX_API_BASE_URL',
-    defaultValue: 'http://localhost:3000',
+    defaultValue: 'https://ramirx-backend.onrender.com/',
   );
 
   static const String tenantId = String.fromEnvironment(
