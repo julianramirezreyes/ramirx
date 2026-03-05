@@ -1,0 +1,274 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+
+import '../cart/cart_controller.dart';
+import '../shared/image_gallery.dart';
+import '../shared/sections_view.dart';
+import 'products_repository.dart';
+
+final productDetailProvider = FutureProvider.family<Product, String>((
+  ref,
+  id,
+) async {
+  return ref.read(productsRepositoryProvider).getById(id);
+});
+
+class ProductDetailPage extends ConsumerStatefulWidget {
+  const ProductDetailPage({super.key, required this.id});
+
+  final String id;
+
+  @override
+  ConsumerState<ProductDetailPage> createState() => _ProductDetailPageState();
+}
+
+class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
+  int _qty = 1;
+
+  List<String> _resolveImages(Product p) {
+    if (p.imagesUrls.isNotEmpty) return p.imagesUrls;
+    final cover = (p.coverImageUrl ?? '').trim();
+    return cover.isNotEmpty ? [cover] : const [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asyncProduct = ref.watch(productDetailProvider(widget.id));
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Producto')),
+      body: asyncProduct.when(
+        data: (p) {
+          final theme = Theme.of(context);
+          final sections = SectionModel.fromDynamic(p.sectionsJson);
+          final images = _resolveImages(p);
+          final price = (p.priceCents / 100).toStringAsFixed(2);
+          final compareAt = p.compareAtPriceCents != null
+              ? (p.compareAtPriceCents! / 100).toStringAsFixed(2)
+              : null;
+
+          Widget mobileHeader() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if ((compareAt ?? '').trim().isNotEmpty) ...[
+                      Text(
+                        '\$$compareAt',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Text(
+                      '\$$price',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          Widget qtyRow() {
+            return Row(
+              children: [
+                IconButton(
+                  onPressed: _qty > 1 ? () => setState(() => _qty--) : null,
+                  icon: const Icon(Icons.remove),
+                ),
+                Text(
+                  '$_qty',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _qty++),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            );
+          }
+
+          Future<void> addToCart() async {
+            for (int i = 0; i < _qty; i++) {
+              await ref
+                  .read(cartControllerProvider.notifier)
+                  .add(
+                    type: CartItemType.product,
+                    id: p.id,
+                    title: p.name,
+                    priceCents: p.priceCents,
+                  );
+            }
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Agregado al carrito')),
+            );
+          }
+
+          Widget ctaCard({required bool isDesktop}) {
+            return Card(
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.35,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if ((compareAt ?? '').trim().isNotEmpty) ...[
+                          Text(
+                            '\$$compareAt',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        Text(
+                          '\$$price',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Stock: ${p.stockQty}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    qtyRow(),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: addToCart,
+                        icon: const Icon(Icons.add_shopping_cart),
+                        label: const Text('Agregar'),
+                      ),
+                    ),
+                    if (!isDesktop &&
+                        (p.description ?? '').trim().isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      Text(p.description!, style: theme.textTheme.bodyLarge),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
+
+          Widget detailsColumn({required bool isDesktop}) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (images.isNotEmpty) ...[
+                  ImageGallery(imageUrls: images),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop &&
+                    (p.descriptionHtml ?? '').trim().isNotEmpty) ...[
+                  HtmlWidget(p.descriptionHtml!),
+                  const SizedBox(height: 16),
+                ],
+              ],
+            );
+          }
+
+          Widget belowCtaMobile() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                SectionsView(sections: sections),
+                if ((p.descriptionHtml ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  HtmlWidget(p.descriptionHtml!),
+                ],
+              ],
+            );
+          }
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= 900;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1100),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: isDesktop
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: detailsColumn(isDesktop: true),
+                              ),
+                              const SizedBox(width: 24),
+                              SizedBox(
+                                width: 360,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ctaCard(isDesktop: true),
+                                    const SizedBox(height: 16),
+                                    SectionsView(sections: sections),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              mobileHeader(),
+                              const SizedBox(height: 14),
+                              detailsColumn(isDesktop: false),
+                              const SizedBox(height: 16),
+                              ctaCard(isDesktop: false),
+                              belowCtaMobile(),
+                            ],
+                          ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error cargando producto: $e')),
+      ),
+    );
+  }
+}
