@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:go_router/go_router.dart';
 
 import '../cart/cart_controller.dart';
 import '../shared/image_gallery.dart';
@@ -48,6 +49,56 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
           final compareAt = c.compareAtPriceCents != null
               ? formatCopFromCents(c.compareAtPriceCents!)
               : null;
+
+          Widget linkedArticlesSection() {
+            if (c.linkedArticles.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                Text(
+                  'Artículos vinculados',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                for (final a in c.linkedArticles)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: (a.coverImageUrl ?? '').trim().isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              a.coverImageUrl!,
+                              width: 54,
+                              height: 54,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : const SizedBox(width: 54, height: 54),
+                    title: Text(
+                      a.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: Text(formatCopFromCents(a.priceCents)),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      if (a.type == 'product') {
+                        context.push('/products/${a.id}');
+                      } else if (a.type == 'course') {
+                        context.push('/courses/${a.id}');
+                      } else if (a.type == 'service') {
+                        context.push('/services/${a.id}');
+                      }
+                    },
+                  ),
+              ],
+            );
+          }
 
           Widget mobileHeader() {
             return Column(
@@ -186,6 +237,8 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                   HtmlWidget(c.descriptionHtml!),
                   const SizedBox(height: 16),
                 ],
+
+                linkedArticlesSection(),
               ],
             );
           }
@@ -199,6 +252,8 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                   const SizedBox(height: 16),
                   HtmlWidget(c.descriptionHtml!),
                 ],
+
+                linkedArticlesSection(),
               ],
             );
           }

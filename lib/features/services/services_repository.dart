@@ -8,6 +8,35 @@ final servicesRepositoryProvider = Provider<ServicesRepository>((ref) {
   return ServicesRepository(ref.read(dioProvider));
 });
 
+class LinkedArticleSummary {
+  LinkedArticleSummary({
+    required this.type,
+    required this.id,
+    required this.title,
+    required this.coverImageUrl,
+    required this.priceCents,
+    required this.compareAtPriceCents,
+  });
+
+  final String type;
+  final String id;
+  final String title;
+  final String? coverImageUrl;
+  final int priceCents;
+  final int? compareAtPriceCents;
+
+  factory LinkedArticleSummary.fromJson(Map<String, dynamic> json) {
+    return LinkedArticleSummary(
+      type: (json['type'] as String?) ?? 'service',
+      id: json['id'] as String,
+      title: (json['title'] as String?) ?? '',
+      coverImageUrl: json['coverImageUrl'] as String?,
+      priceCents: (json['priceCents'] as num?)?.toInt() ?? 0,
+      compareAtPriceCents: (json['compareAtPriceCents'] as num?)?.toInt(),
+    );
+  }
+}
+
 class Service {
   Service({
     required this.id,
@@ -22,6 +51,7 @@ class Service {
     required this.imagesUrls,
     required this.descriptionHtml,
     required this.sectionsJson,
+    required this.linkedArticles,
   });
 
   final String id;
@@ -36,6 +66,7 @@ class Service {
   final List<String> imagesUrls;
   final String? descriptionHtml;
   final dynamic sectionsJson;
+  final List<LinkedArticleSummary> linkedArticles;
 
   factory Service.fromJson(Map<String, dynamic> json) {
     final rawImages = json['imagesUrls'];
@@ -43,6 +74,16 @@ class Service {
     if (rawImages is List) {
       for (final v in rawImages) {
         if (v is String && v.trim().isNotEmpty) images.add(v);
+      }
+    }
+
+    final linked = <LinkedArticleSummary>[];
+    final rawLinked = json['linkedArticles'];
+    if (rawLinked is List) {
+      for (final v in rawLinked) {
+        if (v is Map<String, dynamic>) {
+          linked.add(LinkedArticleSummary.fromJson(v));
+        }
       }
     }
 
@@ -59,6 +100,7 @@ class Service {
       imagesUrls: images,
       descriptionHtml: json['descriptionHtml'] as String?,
       sectionsJson: json['sectionsJson'],
+      linkedArticles: linked,
     );
   }
 }

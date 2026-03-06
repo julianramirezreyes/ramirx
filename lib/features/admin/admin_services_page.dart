@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../uploads/uploads_repository.dart';
 import '../services/services_repository.dart';
+import 'linked_articles_editor_dialog.dart';
 import '../../core/formatters/money.dart';
 import 'sections_editor.dart';
 
@@ -326,6 +327,23 @@ class AdminServicesPage extends ConsumerWidget {
                           initial: sections,
                           onChanged: (next) => sections = next,
                         ),
+
+                        if (existing != null) ...[
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                              onPressed: () => LinkedArticlesEditorDialog.open(
+                                context: context,
+                                ref: ref,
+                                fromType: 'service',
+                                fromId: existing.id,
+                              ),
+                              icon: const Icon(Icons.link),
+                              label: const Text('Artículos vinculados'),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
