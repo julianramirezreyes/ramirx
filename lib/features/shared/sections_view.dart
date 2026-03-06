@@ -63,7 +63,7 @@ class _SectionsTabs extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest.withValues(
                 alpha: 0.35,
@@ -75,16 +75,21 @@ class _SectionsTabs extends StatelessWidget {
             ),
             child: TabBar(
               isScrollable: true,
+              padding: EdgeInsets.zero,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+              tabAlignment: TabAlignment.start,
               dividerColor: Colors.transparent,
               labelColor: theme.colorScheme.onPrimary,
-              unselectedLabelColor: theme.colorScheme.onSurface,
+              unselectedLabelColor: theme.colorScheme.onSurface.withValues(
+                alpha: 0.85,
+              ),
               labelStyle: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
               unselectedLabelStyle: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
+              indicatorSize: TabBarIndicatorSize.label,
               indicator: BoxDecoration(
                 color: const Color(0xFF1C2833),
                 borderRadius: BorderRadius.circular(10),
@@ -95,7 +100,7 @@ class _SectionsTabs extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 6,
+                        vertical: 8,
                       ),
                       child: Text(s.title),
                     ),
@@ -154,11 +159,12 @@ class _SectionsAccordionState extends State<_SectionsAccordion> {
         for (int i = 0; i < widget.sections.length; i++)
           ExpansionPanel(
             isExpanded: _open[i],
+            canTapOnHeader: true,
             headerBuilder: (context, isExpanded) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  margin: EdgeInsets.zero,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest.withValues(
                       alpha: 0.20,
@@ -171,7 +177,7 @@ class _SectionsAccordionState extends State<_SectionsAccordion> {
                   child: ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
+                      horizontal: 0,
                       vertical: 4,
                     ),
                     title: Text(
@@ -191,7 +197,7 @@ class _SectionsAccordionState extends State<_SectionsAccordion> {
               );
             },
             body: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+              padding: const EdgeInsets.fromLTRB(0, 4, 0, 14),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),

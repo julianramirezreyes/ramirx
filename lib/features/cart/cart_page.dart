@@ -7,6 +7,7 @@ import 'cart_controller.dart';
 import 'orders_repository.dart';
 import '../uploads/uploads_repository.dart';
 import '../../core/auth/auth_repository.dart';
+import '../../core/formatters/money.dart';
 
 class CartPage extends ConsumerWidget {
   const CartPage({super.key});
@@ -52,7 +53,7 @@ class CartPage extends ConsumerWidget {
               ),
               const Spacer(),
               Text(
-                _formatMoney(cart.totalCents),
+                formatCopFromCents(cart.totalCents),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
@@ -234,10 +235,12 @@ class _CartItemRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final price = formatCopFromCents(item.priceCents);
+
     return Card(
       elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             Expanded(
@@ -251,7 +254,7 @@ class _CartItemRow extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text('${_formatMoney(item.priceCents)} x ${item.quantity}'),
+                  Text('$price x ${item.quantity}'),
                 ],
               ),
             ),
@@ -281,9 +284,4 @@ class _CartItemRow extends ConsumerWidget {
       ),
     );
   }
-}
-
-String _formatMoney(int cents) {
-  final value = cents / 100.0;
-  return '\$${value.toStringAsFixed(2)}';
 }

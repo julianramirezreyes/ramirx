@@ -17,6 +17,72 @@ class AppShell extends ConsumerWidget {
     final cart = ref.watch(cartControllerProvider);
 
     return Scaffold(
+      drawer: isSmall
+          ? Drawer(
+              child: SafeArea(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    ListTile(
+                      title: const Text('Inicio'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/home');
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Servicios'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/services');
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Productos'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/products');
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Capacitaciones'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/courses');
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Carrito'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/cart');
+                      },
+                    ),
+                    ListTile(
+                      title: Text(
+                        auth.isAuthenticated ? 'Mi cuenta' : 'Ingresar',
+                      ),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go(
+                          auth.isAuthenticated ? '/account' : '/login',
+                        );
+                      },
+                    ),
+                    if (auth.isAdmin)
+                      ListTile(
+                        title: const Text('Admin'),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          context.go('/admin');
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            )
+          : null,
       appBar: AppBar(
         titleSpacing: 16,
         elevation: 0,
@@ -52,7 +118,7 @@ class AppShell extends ConsumerWidget {
           ],
         ),
         actions: [
-          if (auth.isAdmin)
+          if (!isSmall && auth.isAdmin)
             TextButton(
               onPressed: () => context.go('/admin'),
               child: const Text('Admin'),
@@ -61,11 +127,12 @@ class AppShell extends ConsumerWidget {
             qty: cart.totalQty,
             onPressed: () => context.go('/cart'),
           ),
-          TextButton(
-            onPressed: () =>
-                context.go(auth.isAuthenticated ? '/account' : '/login'),
-            child: Text(auth.isAuthenticated ? 'Mi cuenta' : 'Ingresar'),
-          ),
+          if (!isSmall)
+            TextButton(
+              onPressed: () =>
+                  context.go(auth.isAuthenticated ? '/account' : '/login'),
+              child: Text(auth.isAuthenticated ? 'Mi cuenta' : 'Ingresar'),
+            ),
           IconButton(
             onPressed: () =>
                 ref.read(themeControllerProvider.notifier).toggle(),

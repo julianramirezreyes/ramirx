@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../cart/cart_controller.dart';
 import '../shared/item_card.dart';
 import 'products_repository.dart';
+import '../../core/formatters/money.dart';
 
 final productsListProvider = FutureProvider<List<Product>>((ref) async {
   return ref.read(productsRepositoryProvider).list();
@@ -71,9 +72,9 @@ class _ProductTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final price = _formatMoney(product.priceCents);
+    final price = formatCopFromCents(product.priceCents);
     final compareAtPrice = product.compareAtPriceCents != null
-        ? _formatMoney(product.compareAtPriceCents!)
+        ? formatCopFromCents(product.compareAtPriceCents!)
         : null;
 
     final imageUrl = product.imagesUrls.isNotEmpty
@@ -107,9 +108,4 @@ class _ProductTile extends ConsumerWidget {
       },
     );
   }
-}
-
-String _formatMoney(int cents) {
-  final value = cents / 100.0;
-  return '\$${value.toStringAsFixed(2)}';
 }

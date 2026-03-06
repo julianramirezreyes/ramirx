@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../cart/cart_controller.dart';
 import '../shared/item_card.dart';
 import 'courses_repository.dart';
+import '../../core/formatters/money.dart';
 
 final coursesListProvider = FutureProvider<List<Course>>((ref) async {
   return ref.read(coursesRepositoryProvider).list();
@@ -71,9 +72,9 @@ class _CourseTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final price = _formatMoney(course.priceCents);
+    final price = formatCopFromCents(course.priceCents);
     final compareAtPrice = course.compareAtPriceCents != null
-        ? _formatMoney(course.compareAtPriceCents!)
+        ? formatCopFromCents(course.compareAtPriceCents!)
         : null;
 
     final imageUrl = course.imagesUrls.isNotEmpty
@@ -142,9 +143,4 @@ class _LevelBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatMoney(int cents) {
-  final value = cents / 100.0;
-  return '\$${value.toStringAsFixed(2)}';
 }

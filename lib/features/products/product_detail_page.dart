@@ -6,6 +6,7 @@ import '../cart/cart_controller.dart';
 import '../shared/image_gallery.dart';
 import '../shared/sections_view.dart';
 import 'products_repository.dart';
+import '../../core/formatters/money.dart';
 
 final productDetailProvider = FutureProvider.family<Product, String>((
   ref,
@@ -43,9 +44,9 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
           final theme = Theme.of(context);
           final sections = SectionModel.fromDynamic(p.sectionsJson);
           final images = _resolveImages(p);
-          final price = (p.priceCents / 100).toStringAsFixed(2);
+          final price = formatCopFromCents(p.priceCents);
           final compareAt = p.compareAtPriceCents != null
-              ? (p.compareAtPriceCents! / 100).toStringAsFixed(2)
+              ? formatCopFromCents(p.compareAtPriceCents!)
               : null;
 
           Widget mobileHeader() {
@@ -63,7 +64,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                   children: [
                     if ((compareAt ?? '').trim().isNotEmpty) ...[
                       Text(
-                        '\$$compareAt',
+                        compareAt!,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           decoration: TextDecoration.lineThrough,
@@ -72,7 +73,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                       const SizedBox(width: 10),
                     ],
                     Text(
-                      '\$$price',
+                      price,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -131,18 +132,19 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      p.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                    if (isDesktop)
+                      Text(
+                        p.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
+                    if (isDesktop) const SizedBox(height: 8),
                     Row(
                       children: [
                         if ((compareAt ?? '').trim().isNotEmpty) ...[
                           Text(
-                            '\$$compareAt',
+                            compareAt!,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               decoration: TextDecoration.lineThrough,
@@ -151,7 +153,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                           const SizedBox(width: 10),
                         ],
                         Text(
-                          '\$$price',
+                          price,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
@@ -176,11 +178,6 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                         label: const Text('Agregar'),
                       ),
                     ),
-                    if (!isDesktop &&
-                        (p.description ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Text(p.description!, style: theme.textTheme.bodyLarge),
-                    ],
                   ],
                 ),
               ),
@@ -193,6 +190,22 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
               children: [
                 if (images.isNotEmpty) ...[
                   ImageGallery(imageUrls: images),
+                  const SizedBox(height: 16),
+                ],
+                if (!isDesktop && (p.description ?? '').trim().isNotEmpty) ...[
+                  Text(p.description!, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                ],
+                if (!isDesktop) ...[
+                  SectionsView(sections: sections),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop && (p.description ?? '').trim().isNotEmpty) ...[
+                  Text(p.description!, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop) ...[
+                  SectionsView(sections: sections),
                   const SizedBox(height: 16),
                 ],
                 if (isDesktop &&
@@ -209,7 +222,6 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                SectionsView(sections: sections),
                 if ((p.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   HtmlWidget(p.descriptionHtml!),
@@ -240,11 +252,7 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [
-                                    ctaCard(isDesktop: true),
-                                    const SizedBox(height: 16),
-                                    SectionsView(sections: sections),
-                                  ],
+                                  children: [ctaCard(isDesktop: true)],
                                 ),
                               ),
                             ],

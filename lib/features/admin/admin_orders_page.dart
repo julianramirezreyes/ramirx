@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../cart/orders_repository.dart';
+import '../../core/formatters/money.dart';
 
 final adminOrdersProvider = FutureProvider<List<OrderSummary>>((ref) async {
   return ref.read(ordersRepositoryProvider).adminListOrders();
@@ -77,7 +78,7 @@ class AdminOrdersPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Total: \$${(detail.order.totalAmountCents / 100).toStringAsFixed(2)}',
+                    'Total: ${formatCopFromCents(detail.order.totalAmountCents)}',
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
@@ -109,7 +110,7 @@ class AdminOrdersPage extends ConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Text(
-                        '- ${it.type} · ${it.quantity} x \$${(it.priceCents / 100).toStringAsFixed(2)}',
+                        '- ${it.type} · ${it.quantity} x ${formatCopFromCents(it.priceCents)}',
                       ),
                     ),
                   const SizedBox(height: 12),
@@ -226,7 +227,7 @@ class AdminOrdersPage extends ConsumerWidget {
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                         subtitle: Text(
-                          '${o.status} · \$${(o.totalAmountCents / 100).toStringAsFixed(2)}'
+                          '${o.status} · ${formatCopFromCents(o.totalAmountCents)}'
                           '${(o.receiptUrl ?? '').trim().isNotEmpty ? ' · con comprobante' : ''}',
                         ),
                         trailing: const Icon(Icons.chevron_right),

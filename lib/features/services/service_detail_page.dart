@@ -4,6 +4,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config.dart';
+import '../../core/formatters/money.dart';
 import '../shared/image_gallery.dart';
 import '../shared/sections_view.dart';
 import 'services_repository.dart';
@@ -45,9 +46,9 @@ class ServiceDetailPage extends ConsumerWidget {
                     ? [s.coverImageUrl!.trim()]
                     : const <String>[]);
 
-          final price = (s.priceCents / 100).toStringAsFixed(2);
+          final price = formatCopFromCents(s.priceCents);
           final compareAt = s.compareAtPriceCents != null
-              ? (s.compareAtPriceCents! / 100).toStringAsFixed(2)
+              ? formatCopFromCents(s.compareAtPriceCents!)
               : null;
 
           Widget mobileHeader() {
@@ -65,7 +66,7 @@ class ServiceDetailPage extends ConsumerWidget {
                   children: [
                     if ((compareAt ?? '').trim().isNotEmpty) ...[
                       Text(
-                        '\$$compareAt',
+                        compareAt!,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           decoration: TextDecoration.lineThrough,
@@ -74,7 +75,7 @@ class ServiceDetailPage extends ConsumerWidget {
                       const SizedBox(width: 10),
                     ],
                     Text(
-                      '\$$price',
+                      'Desde $price',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -97,23 +98,19 @@ class ServiceDetailPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      s.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                    if (isDesktop)
+                      Text(
+                        s.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    if (!isDesktop &&
-                        (s.description ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(s.description!, style: theme.textTheme.bodyLarge),
-                    ],
-                    const SizedBox(height: 12),
+                    if (isDesktop) const SizedBox(height: 12),
                     Row(
                       children: [
                         if ((compareAt ?? '').trim().isNotEmpty) ...[
                           Text(
-                            '\$$compareAt',
+                            compareAt!,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               decoration: TextDecoration.lineThrough,
@@ -122,7 +119,7 @@ class ServiceDetailPage extends ConsumerWidget {
                           const SizedBox(width: 10),
                         ],
                         Text(
-                          '\$$price',
+                          'Desde $price',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
@@ -167,6 +164,18 @@ class ServiceDetailPage extends ConsumerWidget {
                   ImageGallery(imageUrls: images),
                   const SizedBox(height: 16),
                 ],
+                if ((s.description ?? '').trim().isNotEmpty) ...[
+                  Text(s.description!, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop) ...[
+                  SectionsView(sections: sections),
+                  const SizedBox(height: 16),
+                ],
+                if (!isDesktop) ...[
+                  SectionsView(sections: sections),
+                  const SizedBox(height: 16),
+                ],
                 if (isDesktop &&
                     (s.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   HtmlWidget(s.descriptionHtml!),
@@ -181,7 +190,6 @@ class ServiceDetailPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                SectionsView(sections: sections),
                 if ((s.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   HtmlWidget(s.descriptionHtml!),
@@ -212,11 +220,7 @@ class ServiceDetailPage extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [
-                                    ctaCard(isDesktop: true),
-                                    const SizedBox(height: 16),
-                                    SectionsView(sections: sections),
-                                  ],
+                                  children: [ctaCard(isDesktop: true)],
                                 ),
                               ),
                             ],

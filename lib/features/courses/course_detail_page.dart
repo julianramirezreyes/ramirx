@@ -6,6 +6,7 @@ import '../cart/cart_controller.dart';
 import '../shared/image_gallery.dart';
 import '../shared/sections_view.dart';
 import 'courses_repository.dart';
+import '../../core/formatters/money.dart';
 
 final courseDetailProvider = FutureProvider.family<Course, String>((
   ref,
@@ -43,9 +44,9 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
           final theme = Theme.of(context);
           final sections = SectionModel.fromDynamic(c.sectionsJson);
           final images = _resolveImages(c);
-          final price = (c.priceCents / 100).toStringAsFixed(2);
+          final price = formatCopFromCents(c.priceCents);
           final compareAt = c.compareAtPriceCents != null
-              ? (c.compareAtPriceCents! / 100).toStringAsFixed(2)
+              ? formatCopFromCents(c.compareAtPriceCents!)
               : null;
 
           Widget mobileHeader() {
@@ -64,9 +65,9 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                   runSpacing: 6,
                   children: [
                     _InfoChip(label: 'Nivel: ${c.level}'),
-                    _InfoChip(label: '\$$price'),
+                    _InfoChip(label: price),
                     if ((compareAt ?? '').trim().isNotEmpty)
-                      _InfoChip(label: 'Antes: \$$compareAt'),
+                      _InfoChip(label: 'Antes: $compareAt'),
                   ],
                 ),
               ],
@@ -121,21 +122,22 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      c.title,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                    if (isDesktop)
+                      Text(
+                        c.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
+                    if (isDesktop) const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
                       children: [
                         _InfoChip(label: 'Nivel: ${c.level}'),
-                        _InfoChip(label: '\$$price'),
+                        _InfoChip(label: price),
                         if ((compareAt ?? '').trim().isNotEmpty)
-                          _InfoChip(label: 'Antes: \$$compareAt'),
+                          _InfoChip(label: 'Antes: $compareAt'),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -149,11 +151,6 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                         label: const Text('Agregar'),
                       ),
                     ),
-                    if (!isDesktop &&
-                        (c.description ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Text(c.description!, style: theme.textTheme.bodyLarge),
-                    ],
                   ],
                 ),
               ),
@@ -166,6 +163,22 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
               children: [
                 if (images.isNotEmpty) ...[
                   ImageGallery(imageUrls: images),
+                  const SizedBox(height: 16),
+                ],
+                if (!isDesktop && (c.description ?? '').trim().isNotEmpty) ...[
+                  Text(c.description!, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                ],
+                if (!isDesktop) ...[
+                  SectionsView(sections: sections),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop && (c.description ?? '').trim().isNotEmpty) ...[
+                  Text(c.description!, style: theme.textTheme.bodyLarge),
+                  const SizedBox(height: 16),
+                ],
+                if (isDesktop) ...[
+                  SectionsView(sections: sections),
                   const SizedBox(height: 16),
                 ],
                 if (isDesktop &&
@@ -182,7 +195,6 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                SectionsView(sections: sections),
                 if ((c.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   HtmlWidget(c.descriptionHtml!),
@@ -213,11 +225,7 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [
-                                    ctaCard(isDesktop: true),
-                                    const SizedBox(height: 16),
-                                    SectionsView(sections: sections),
-                                  ],
+                                  children: [ctaCard(isDesktop: true)],
                                 ),
                               ),
                             ],

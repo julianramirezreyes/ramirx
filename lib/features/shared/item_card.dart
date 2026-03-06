@@ -74,6 +74,7 @@ class ItemCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -96,8 +97,10 @@ class ItemCard extends StatelessWidget {
                   ),
                 ],
                 if (primaryAction != null &&
-                    (primaryActionLabel ?? '').trim().isNotEmpty) ...[
+                    (primaryActionLabel ?? '').trim().isNotEmpty)
                   const SizedBox(height: 10),
+                if (primaryAction != null &&
+                    (primaryActionLabel ?? '').trim().isNotEmpty) ...[
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(

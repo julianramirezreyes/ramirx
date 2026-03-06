@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../shared/item_card.dart';
 import 'services_repository.dart';
+import '../../core/formatters/money.dart';
 
 final servicesListProvider = FutureProvider<List<Service>>((ref) async {
   return ref.read(servicesRepositoryProvider).list();
@@ -54,9 +55,9 @@ class ServicesPage extends ConsumerWidget {
                     ? s.imagesUrls.first
                     : (s.coverImageUrl ?? '');
 
-                final price = (s.priceCents / 100).toStringAsFixed(2);
+                final price = formatCopFromCents(s.priceCents);
                 final compareAt = s.compareAtPriceCents != null
-                    ? (s.compareAtPriceCents! / 100).toStringAsFixed(2)
+                    ? formatCopFromCents(s.compareAtPriceCents!)
                     : null;
 
                 return ItemCard(
@@ -67,9 +68,9 @@ class ServicesPage extends ConsumerWidget {
                   imageUrl: imageUrl,
                   placeholderIcon: Icons.design_services_outlined,
                   badge: _ServiceBadge(),
-                  priceLabel: '\$$price',
+                  priceLabel: 'Desde $price',
                   compareAtPriceLabel: (compareAt ?? '').trim().isNotEmpty
-                      ? '\$$compareAt'
+                      ? 'Antes: $compareAt'
                       : null,
                   onTap: () => context.go('/services/${s.id}'),
                 );

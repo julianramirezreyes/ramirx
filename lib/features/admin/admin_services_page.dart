@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../uploads/uploads_repository.dart';
 import '../services/services_repository.dart';
+import '../../core/formatters/money.dart';
 import 'sections_editor.dart';
 
 final adminServicesProvider = FutureProvider<List<Service>>((ref) async {
@@ -476,8 +477,8 @@ class AdminServicesPage extends ConsumerWidget {
                       ListTile(
                         title: Text(s.name),
                         subtitle: Text(
-                          '${s.visibility} · \$${(s.priceCents / 100).toStringAsFixed(2)}'
-                          '${s.compareAtPriceCents != null ? ' (antes \$${(s.compareAtPriceCents! / 100).toStringAsFixed(2)})' : ''}'
+                          '${s.visibility} · ${formatCopFromCents(s.priceCents)}'
+                          '${s.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(s.compareAtPriceCents!)})' : ''}'
                           '${(s.description ?? '').trim().isNotEmpty ? "\n${s.description}" : ''}',
                         ),
                         trailing: Wrap(

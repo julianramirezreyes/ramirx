@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../uploads/uploads_repository.dart';
 import '../products/products_repository.dart';
+import '../../core/formatters/money.dart';
 import 'sections_editor.dart';
 
 final adminProductsProvider = FutureProvider<List<Product>>((ref) async {
@@ -433,8 +434,8 @@ class AdminProductsPage extends ConsumerWidget {
                       ListTile(
                         title: Text(p.name),
                         subtitle: Text(
-                          'Stock: ${p.stockQty} · ${(p.priceCents / 100).toStringAsFixed(2)}'
-                          '${p.compareAtPriceCents != null ? ' (antes ${(p.compareAtPriceCents! / 100).toStringAsFixed(2)})' : ''}',
+                          'Stock: ${p.stockQty} · ${formatCopFromCents(p.priceCents)}'
+                          '${p.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(p.compareAtPriceCents!)})' : ''}',
                         ),
                         trailing: Wrap(
                           spacing: 8,

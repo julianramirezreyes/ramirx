@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../uploads/uploads_repository.dart';
 import '../courses/courses_repository.dart';
+import '../../core/formatters/money.dart';
 import 'sections_editor.dart';
 
 final adminCoursesProvider = FutureProvider<List<Course>>((ref) async {
@@ -444,8 +445,8 @@ class AdminCoursesPage extends ConsumerWidget {
                       ListTile(
                         title: Text(c.title),
                         subtitle: Text(
-                          '${c.level} · ${(c.priceCents / 100).toStringAsFixed(2)}'
-                          '${c.compareAtPriceCents != null ? ' (antes ${(c.compareAtPriceCents! / 100).toStringAsFixed(2)})' : ''}',
+                          '${c.level} · ${formatCopFromCents(c.priceCents)}'
+                          '${c.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(c.compareAtPriceCents!)})' : ''}',
                         ),
                         trailing: Wrap(
                           spacing: 8,
