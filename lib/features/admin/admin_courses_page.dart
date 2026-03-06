@@ -431,74 +431,131 @@ class AdminCoursesPage extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Agregar'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          asyncItems.when(
-            data: (items) {
-              if (items.isEmpty) return const Text('No hay capacitaciones.');
-              return Card(
-                elevation: 0,
-                child: Column(
+      body: asyncItems.when(
+        data: (items) {
+          if (items.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('No hay capacitaciones.'),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    for (final c in items)
-                      ListTile(
-                        title: Text(c.title),
-                        subtitle: Text(
-                          '${c.level} · ${formatCopFromCents(c.priceCents)}'
-                          '${c.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(c.compareAtPriceCents!)})' : ''}',
-                        ),
-                        trailing: Wrap(
-                          spacing: 8,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              onPressed: () =>
-                                  _openUpsertDialog(context, ref, existing: c),
-                              icon: const Icon(Icons.edit),
-                            ),
-                            IconButton(
-                              tooltip: 'Duplicar',
-                              onPressed: () async {
-                                final repo = ref.read(
-                                  coursesRepositoryProvider,
-                                );
-                                await repo.create(
-                                  title: '${c.title} (copia)',
-                                  description: c.description,
-                                  coverImageUrl: c.coverImageUrl,
-                                  imagesUrls: c.imagesUrls.isEmpty
-                                      ? null
-                                      : c.imagesUrls,
-                                  descriptionHtml: c.descriptionHtml,
-                                  sectionsJson: c.sectionsJson,
-                                  level: c.level,
-                                  priceCents: c.priceCents,
-                                  compareAtPriceCents: c.compareAtPriceCents,
-                                );
-                                ref.invalidate(adminCoursesProvider);
-                              },
-                              icon: const Icon(Icons.copy),
-                            ),
-                            IconButton(
-                              tooltip: 'Eliminar',
-                              onPressed: () => _confirmDelete(context, ref, c),
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
-                        ),
-                      ),
+                    Text(
+                      'Capacitaciones',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Refrescar',
+                      onPressed: () => ref.invalidate(adminCoursesProvider),
+                      icon: const Icon(Icons.refresh),
+                    ),
                   ],
                 ),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.only(top: 24),
-              child: Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    itemCount: items.length,
+                    onReorder: (oldIndex, newIndex) async {
+                      try {
+                        final current = List<Course>.from(items);
+                        if (newIndex > oldIndex) newIndex -= 1;
+                        final moved = current.removeAt(oldIndex);
+                        current.insert(newIndex, moved);
+
+                        await ref
+                            .read(coursesRepositoryProvider)
+                            .adminReorder(current);
+                        ref.invalidate(adminCoursesProvider);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('No se pudo reordenar: $e')),
+                        );
+                      }
+                    },
+                    itemBuilder: (context, index) {
+                      final c = items[index];
+                      return Card(
+                        key: ValueKey(c.id),
+                        child: ListTile(
+                          title: Text(c.title),
+                          subtitle: Text(
+                            '${formatCopFromCents(c.priceCents)} • nivel ${c.level}',
+                          ),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Icon(Icons.drag_handle),
+                              ),
+                              IconButton(
+                                tooltip: 'Editar',
+                                onPressed: () => _openUpsertDialog(
+                                  context,
+                                  ref,
+                                  existing: c,
+                                ),
+                                icon: const Icon(Icons.edit),
+                              ),
+                              IconButton(
+                                tooltip: 'Duplicar',
+                                onPressed: () async {
+                                  final repo = ref.read(
+                                    coursesRepositoryProvider,
+                                  );
+                                  await repo.create(
+                                    title: '${c.title} (copia)',
+                                    description: c.description,
+                                    coverImageUrl: c.coverImageUrl,
+                                    imagesUrls: c.imagesUrls.isEmpty
+                                        ? null
+                                        : c.imagesUrls,
+                                    descriptionHtml: c.descriptionHtml,
+                                    sectionsJson: c.sectionsJson,
+                                    level: c.level,
+                                    priceCents: c.priceCents,
+                                    compareAtPriceCents: c.compareAtPriceCents,
+                                  );
+                                  ref.invalidate(adminCoursesProvider);
+                                },
+                                icon: const Icon(Icons.copy),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar',
+                                onPressed: () =>
+                                    _confirmDelete(context, ref, c),
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            error: (e, _) => Text('Error: $e'),
-          ),
-        ],
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.only(top: 24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('Error: $e'),
+        ),
       ),
     );
   }

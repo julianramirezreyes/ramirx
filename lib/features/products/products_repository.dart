@@ -173,4 +173,16 @@ class ProductsRepository {
   Future<void> delete({required String id}) async {
     await _dio.delete<void>('/products/$id');
   }
+
+  Future<void> adminReorder(List<Product> ordered) async {
+    await _dio.patch<void>(
+      '/products/reorder',
+      data: {
+        'order': [
+          for (var i = 0; i < ordered.length; i++)
+            {'id': ordered[i].id, 'sortOrder': i},
+        ],
+      },
+    );
+  }
 }

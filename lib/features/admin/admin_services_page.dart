@@ -463,76 +463,133 @@ class AdminServicesPage extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Agregar'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          asyncItems.when(
-            data: (items) {
-              if (items.isEmpty) return const Text('No hay servicios.');
-              return Card(
-                elevation: 0,
-                child: Column(
+      body: asyncItems.when(
+        data: (items) {
+          if (items.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('No hay servicios.'),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    for (final s in items)
-                      ListTile(
-                        title: Text(s.name),
-                        subtitle: Text(
-                          '${s.visibility} · ${formatCopFromCents(s.priceCents)}'
-                          '${s.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(s.compareAtPriceCents!)})' : ''}'
-                          '${(s.description ?? '').trim().isNotEmpty ? "\n${s.description}" : ''}',
-                        ),
-                        trailing: Wrap(
-                          spacing: 8,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              onPressed: () =>
-                                  _openUpsertDialog(context, ref, existing: s),
-                              icon: const Icon(Icons.edit),
-                            ),
-                            IconButton(
-                              tooltip: 'Duplicar',
-                              onPressed: () async {
-                                final repo = ref.read(
-                                  servicesRepositoryProvider,
-                                );
-                                await repo.create(
-                                  name: '${s.name} (copia)',
-                                  description: s.description,
-                                  coverImageUrl: s.coverImageUrl,
-                                  imagesUrls: s.imagesUrls.isEmpty
-                                      ? null
-                                      : s.imagesUrls,
-                                  descriptionHtml: s.descriptionHtml,
-                                  sectionsJson: s.sectionsJson,
-                                  priceCents: s.priceCents,
-                                  compareAtPriceCents: s.compareAtPriceCents,
-                                  visibility: s.visibility,
-                                  assignedUserId: s.assignedUserId,
-                                );
-                                ref.invalidate(adminServicesProvider);
-                              },
-                              icon: const Icon(Icons.copy),
-                            ),
-                            IconButton(
-                              tooltip: 'Eliminar',
-                              onPressed: () => _confirmDelete(context, ref, s),
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
-                        ),
-                      ),
+                    Text(
+                      'Servicios',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Refrescar',
+                      onPressed: () => ref.invalidate(adminServicesProvider),
+                      icon: const Icon(Icons.refresh),
+                    ),
                   ],
                 ),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.only(top: 24),
-              child: Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    itemCount: items.length,
+                    onReorder: (oldIndex, newIndex) async {
+                      try {
+                        final current = List<Service>.from(items);
+                        if (newIndex > oldIndex) newIndex -= 1;
+                        final moved = current.removeAt(oldIndex);
+                        current.insert(newIndex, moved);
+
+                        await ref
+                            .read(servicesRepositoryProvider)
+                            .adminReorder(current);
+                        ref.invalidate(adminServicesProvider);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('No se pudo reordenar: $e')),
+                        );
+                      }
+                    },
+                    itemBuilder: (context, index) {
+                      final s = items[index];
+                      return Card(
+                        key: ValueKey(s.id),
+                        child: ListTile(
+                          title: Text(s.name),
+                          subtitle: Text(
+                            '${formatCopFromCents(s.priceCents)} • ${s.visibility}'
+                            '${s.assignedUserEmail != null ? ' • ${s.assignedUserEmail}' : ''}',
+                          ),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Icon(Icons.drag_handle),
+                              ),
+                              IconButton(
+                                tooltip: 'Editar',
+                                onPressed: () => _openUpsertDialog(
+                                  context,
+                                  ref,
+                                  existing: s,
+                                ),
+                                icon: const Icon(Icons.edit),
+                              ),
+                              IconButton(
+                                tooltip: 'Duplicar',
+                                onPressed: () async {
+                                  final repo = ref.read(
+                                    servicesRepositoryProvider,
+                                  );
+                                  await repo.create(
+                                    name: '${s.name} (copia)',
+                                    description: s.description,
+                                    coverImageUrl: s.coverImageUrl,
+                                    imagesUrls: s.imagesUrls.isEmpty
+                                        ? null
+                                        : s.imagesUrls,
+                                    descriptionHtml: s.descriptionHtml,
+                                    sectionsJson: s.sectionsJson,
+                                    priceCents: s.priceCents,
+                                    compareAtPriceCents: s.compareAtPriceCents,
+                                    visibility: s.visibility,
+                                    assignedUserId: s.assignedUserId,
+                                  );
+                                  ref.invalidate(adminServicesProvider);
+                                },
+                                icon: const Icon(Icons.copy),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar',
+                                onPressed: () =>
+                                    _confirmDelete(context, ref, s),
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            error: (e, _) => Text('Error: $e'),
-          ),
-        ],
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.only(top: 24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('Error: $e'),
+        ),
       ),
     );
   }

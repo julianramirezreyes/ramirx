@@ -190,4 +190,16 @@ class ServicesRepository {
   Future<void> delete({required String id}) async {
     await _dio.delete<void>('/services/$id');
   }
+
+  Future<void> adminReorder(List<Service> ordered) async {
+    await _dio.patch<void>(
+      '/services/reorder',
+      data: {
+        'order': [
+          for (var i = 0; i < ordered.length; i++)
+            {'id': ordered[i].id, 'sortOrder': i},
+        ],
+      },
+    );
+  }
 }

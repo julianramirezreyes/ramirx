@@ -420,74 +420,131 @@ class AdminProductsPage extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Agregar'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          asyncItems.when(
-            data: (items) {
-              if (items.isEmpty) return const Text('No hay productos.');
-              return Card(
-                elevation: 0,
-                child: Column(
+      body: asyncItems.when(
+        data: (items) {
+          if (items.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: Text('No hay productos.'),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    for (final p in items)
-                      ListTile(
-                        title: Text(p.name),
-                        subtitle: Text(
-                          'Stock: ${p.stockQty} · ${formatCopFromCents(p.priceCents)}'
-                          '${p.compareAtPriceCents != null ? ' (antes ${formatCopFromCents(p.compareAtPriceCents!)})' : ''}',
-                        ),
-                        trailing: Wrap(
-                          spacing: 8,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              onPressed: () =>
-                                  _openUpsertDialog(context, ref, existing: p),
-                              icon: const Icon(Icons.edit),
-                            ),
-                            IconButton(
-                              tooltip: 'Duplicar',
-                              onPressed: () async {
-                                final repo = ref.read(
-                                  productsRepositoryProvider,
-                                );
-                                await repo.create(
-                                  name: '${p.name} (copia)',
-                                  description: p.description,
-                                  coverImageUrl: p.coverImageUrl,
-                                  imagesUrls: p.imagesUrls.isEmpty
-                                      ? null
-                                      : p.imagesUrls,
-                                  descriptionHtml: p.descriptionHtml,
-                                  sectionsJson: p.sectionsJson,
-                                  priceCents: p.priceCents,
-                                  compareAtPriceCents: p.compareAtPriceCents,
-                                  stockQty: p.stockQty,
-                                );
-                                ref.invalidate(adminProductsProvider);
-                              },
-                              icon: const Icon(Icons.copy),
-                            ),
-                            IconButton(
-                              tooltip: 'Eliminar',
-                              onPressed: () => _confirmDelete(context, ref, p),
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
-                        ),
-                      ),
+                    Text(
+                      'Productos',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Refrescar',
+                      onPressed: () => ref.invalidate(adminProductsProvider),
+                      icon: const Icon(Icons.refresh),
+                    ),
                   ],
                 ),
-              );
-            },
-            loading: () => const Padding(
-              padding: EdgeInsets.only(top: 24),
-              child: Center(child: CircularProgressIndicator()),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    itemCount: items.length,
+                    onReorder: (oldIndex, newIndex) async {
+                      try {
+                        final current = List<Product>.from(items);
+                        if (newIndex > oldIndex) newIndex -= 1;
+                        final moved = current.removeAt(oldIndex);
+                        current.insert(newIndex, moved);
+
+                        await ref
+                            .read(productsRepositoryProvider)
+                            .adminReorder(current);
+                        ref.invalidate(adminProductsProvider);
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('No se pudo reordenar: $e')),
+                        );
+                      }
+                    },
+                    itemBuilder: (context, index) {
+                      final p = items[index];
+                      return Card(
+                        key: ValueKey(p.id),
+                        child: ListTile(
+                          title: Text(p.name),
+                          subtitle: Text(
+                            '${formatCopFromCents(p.priceCents)} • stock ${p.stockQty}',
+                          ),
+                          trailing: Wrap(
+                            spacing: 8,
+                            children: [
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Icon(Icons.drag_handle),
+                              ),
+                              IconButton(
+                                tooltip: 'Editar',
+                                onPressed: () => _openUpsertDialog(
+                                  context,
+                                  ref,
+                                  existing: p,
+                                ),
+                                icon: const Icon(Icons.edit),
+                              ),
+                              IconButton(
+                                tooltip: 'Duplicar',
+                                onPressed: () async {
+                                  final repo = ref.read(
+                                    productsRepositoryProvider,
+                                  );
+                                  await repo.create(
+                                    name: '${p.name} (copia)',
+                                    description: p.description,
+                                    coverImageUrl: p.coverImageUrl,
+                                    imagesUrls: p.imagesUrls.isEmpty
+                                        ? null
+                                        : p.imagesUrls,
+                                    descriptionHtml: p.descriptionHtml,
+                                    sectionsJson: p.sectionsJson,
+                                    priceCents: p.priceCents,
+                                    compareAtPriceCents: p.compareAtPriceCents,
+                                    stockQty: p.stockQty,
+                                  );
+                                  ref.invalidate(adminProductsProvider);
+                                },
+                                icon: const Icon(Icons.copy),
+                              ),
+                              IconButton(
+                                tooltip: 'Eliminar',
+                                onPressed: () =>
+                                    _confirmDelete(context, ref, p),
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            error: (e, _) => Text('Error: $e'),
-          ),
-        ],
+          );
+        },
+        loading: () => const Padding(
+          padding: EdgeInsets.only(top: 24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('Error: $e'),
+        ),
       ),
     );
   }
