@@ -1,0 +1,44 @@
+# Flutter build artifacts (except web)
+build/android/
+build/ios/
+build/windows/
+build/linux/
+build/macos/
+build/.last_build_id
+build/*.cache.dill.track.dill
+build/app/
+build/flutter_assets/
+build/native_assets/
+build/native_hooks/
+build/path_provider_android/
+build/reports/
+build/shared_preferences_android/
+build/test_cache/
+build/tmp/
+build/unit_test_assets/
+
+# Flutter development files
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Other config files
+vercel.json
+.vercelignore
