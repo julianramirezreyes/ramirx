@@ -37,11 +37,7 @@ class LinkedArticleSummary {
   }
 
   Map<String, dynamic> toSetLinkJson({required int sortOrder}) {
-    return {
-      'toType': type,
-      'toId': id,
-      'sortOrder': sortOrder,
-    };
+    return {'toType': type, 'toId': id, 'sortOrder': sortOrder};
   }
 }
 
@@ -49,6 +45,32 @@ class ArticleLinksRepository {
   ArticleLinksRepository(this._dio);
 
   final Dio _dio;
+
+  Future<List<({String toType, String toId, int sortOrder})>> adminListRaw({
+    required String fromType,
+    required String fromId,
+  }) async {
+    final res = await _dio.get<List<dynamic>>(
+      '/article-links/admin',
+      queryParameters: {'fromType': fromType, 'fromId': fromId},
+    );
+
+    final data = res.data ?? const [];
+    final out = <({String toType, String toId, int sortOrder})>[];
+    for (final v in data) {
+      if (v is! Map<String, dynamic>) continue;
+      final toType = v['toType'];
+      final toId = v['toId'];
+      if (toType is! String || toId is! String) continue;
+      out.add((
+        toType: toType,
+        toId: toId,
+        sortOrder: (v['sortOrder'] as num?)?.toInt() ?? 0,
+      ));
+    }
+    out.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return out;
+  }
 
   Future<List<LinkedArticleSummary>> list({
     required String fromType,

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../article_links/article_links_repository.dart'
-    as links_repo;
+import '../article_links/article_links_repository.dart' as links_repo;
 import '../courses/courses_repository.dart' as courses_repo;
 import '../products/products_repository.dart' as products_repo;
 import '../services/services_repository.dart' as services_repo;
@@ -23,8 +22,117 @@ class LinkedArticlesEditorDialog {
   }
 }
 
+class _AvailableList extends StatelessWidget {
+  const _AvailableList({required this.filtered});
+
+  final List<_SelectableItem> filtered;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context
+        .findAncestorStateOfType<_LinkedArticlesEditorDialogState>();
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      child: ListView.separated(
+        itemCount: filtered.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, i) {
+          final it = filtered[i];
+          final selected = state?._isSelected(it.type, it.id) ?? false;
+          return ListTile(
+            enabled: !selected,
+            tileColor: selected
+                ? theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.28,
+                  )
+                : null,
+            leading: (it.coverImageUrl ?? '').trim().isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      it.coverImageUrl!,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const SizedBox(width: 40, height: 40),
+                    ),
+                  )
+                : const SizedBox(width: 40, height: 40),
+            title: Text(it.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+            trailing: selected
+                ? IconButton(
+                    tooltip: 'Quitar',
+                    onPressed: () {
+                      final s = state?._selected.firstWhere(
+                        (x) => x.type == it.type && x.id == it.id,
+                      );
+                      if (s != null) state?._remove(s);
+                    },
+                    icon: const Icon(Icons.close),
+                  )
+                : FilledButton.tonalIcon(
+                    onPressed: selected ? null : () => state?._add(it),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Agregar'),
+                  ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SelectedList extends StatelessWidget {
+  const _SelectedList({
+    required this.selected,
+    required this.onRemove,
+    required this.onReorder,
+  });
+
+  final List<_SelectedItem> selected;
+  final void Function(_SelectedItem it) onRemove;
+  final void Function(int oldIndex, int newIndex) onReorder;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      child: ReorderableListView.builder(
+        itemCount: selected.length,
+        onReorder: onReorder,
+        itemBuilder: (context, i) {
+          final it = selected[i];
+          return ListTile(
+            key: ValueKey('${it.type}:${it.id}'),
+            leading: ReorderableDragStartListener(
+              index: i,
+              child: const Icon(Icons.drag_handle),
+            ),
+            title: Text(it.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+            subtitle: Text(it.type),
+            trailing: IconButton(
+              tooltip: 'Quitar',
+              onPressed: () => onRemove(it),
+              icon: const Icon(Icons.close),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _LinkedArticlesEditorDialog extends ConsumerStatefulWidget {
-  const _LinkedArticlesEditorDialog({required this.fromType, required this.fromId});
+  const _LinkedArticlesEditorDialog({
+    required this.fromType,
+    required this.fromId,
+  });
 
   final String fromType;
   final String fromId;
@@ -62,56 +170,95 @@ class _LinkedArticlesEditorDialogState
         ref.read(services_repo.servicesRepositoryProvider).list(),
         ref
             .read(links_repo.articleLinksRepositoryProvider)
-            .list(fromType: widget.fromType, fromId: widget.fromId),
+            .adminListRaw(fromType: widget.fromType, fromId: widget.fromId),
       ]);
 
       final products = results[0] as List<products_repo.Product>;
       final courses = results[1] as List<courses_repo.Course>;
       final services = results[2] as List<services_repo.Service>;
-      final existing = results[3] as List<links_repo.LinkedArticleSummary>;
+      final raw =
+          results[3] as List<({String toType, String toId, int sortOrder})>;
+
+      final byKey = <String, _SelectableItem>{};
+      for (final p in products) {
+        byKey['product:${p.id}'] = _SelectableItem(
+          type: 'product',
+          id: p.id,
+          title: p.name,
+          coverImageUrl: p.coverImageUrl,
+          priceCents: p.priceCents,
+        );
+      }
+      for (final c in courses) {
+        byKey['course:${c.id}'] = _SelectableItem(
+          type: 'course',
+          id: c.id,
+          title: c.title,
+          coverImageUrl: c.coverImageUrl,
+          priceCents: c.priceCents,
+        );
+      }
+      for (final s in services) {
+        byKey['service:${s.id}'] = _SelectableItem(
+          type: 'service',
+          id: s.id,
+          title: s.name,
+          coverImageUrl: s.coverImageUrl,
+          priceCents: s.priceCents,
+        );
+      }
 
       setState(() {
         _products = products
-            .map((p) => _SelectableItem(
-                  type: 'product',
-                  id: p.id,
-                  title: p.name,
-                  coverImageUrl: p.coverImageUrl,
-                  priceCents: p.priceCents,
-                ))
+            .map(
+              (p) => _SelectableItem(
+                type: 'product',
+                id: p.id,
+                title: p.name,
+                coverImageUrl: p.coverImageUrl,
+                priceCents: p.priceCents,
+              ),
+            )
             .toList(growable: false);
         _courses = courses
-            .map((c) => _SelectableItem(
-                  type: 'course',
-                  id: c.id,
-                  title: c.title,
-                  coverImageUrl: c.coverImageUrl,
-                  priceCents: c.priceCents,
-                ))
+            .map(
+              (c) => _SelectableItem(
+                type: 'course',
+                id: c.id,
+                title: c.title,
+                coverImageUrl: c.coverImageUrl,
+                priceCents: c.priceCents,
+              ),
+            )
             .toList(growable: false);
         _services = services
-            .map((s) => _SelectableItem(
-                  type: 'service',
-                  id: s.id,
-                  title: s.name,
-                  coverImageUrl: s.coverImageUrl,
-                  priceCents: s.priceCents,
-                ))
+            .map(
+              (s) => _SelectableItem(
+                type: 'service',
+                id: s.id,
+                title: s.name,
+                coverImageUrl: s.coverImageUrl,
+                priceCents: s.priceCents,
+              ),
+            )
             .toList(growable: false);
 
         _selected
           ..clear()
           ..addAll(
-            existing.map(
-              (x) => _SelectedItem(
-                type: x.type,
-                id: x.id,
-                title: x.title,
-                coverImageUrl: x.coverImageUrl,
-                priceCents: x.priceCents,
-                compareAtPriceCents: x.compareAtPriceCents,
-              ),
-            ),
+            raw
+                .map((x) => byKey['${x.toType}:${x.toId}'])
+                .whereType<_SelectableItem>()
+                .map(
+                  (it) => _SelectedItem(
+                    type: it.type,
+                    id: it.id,
+                    title: it.title,
+                    coverImageUrl: it.coverImageUrl,
+                    priceCents: it.priceCents,
+                    compareAtPriceCents: null,
+                  ),
+                ),
           );
       });
     } finally {
@@ -148,7 +295,9 @@ class _LinkedArticlesEditorDialogState
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await ref.read(links_repo.articleLinksRepositoryProvider).setLinks(
+      await ref
+          .read(links_repo.articleLinksRepositoryProvider)
+          .setLinks(
             fromType: widget.fromType,
             fromId: widget.fromId,
             linked: _selected
@@ -169,9 +318,9 @@ class _LinkedArticlesEditorDialogState
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error guardando vínculos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error guardando vínculos: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -185,14 +334,17 @@ class _LinkedArticlesEditorDialogState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final isNarrow = MediaQuery.of(context).size.width < 760;
 
     final list = _activeList();
     final q = _query.trim().toLowerCase();
-    final filtered = q.isEmpty
-        ? list
-        : list
-            .where((x) => x.title.toLowerCase().contains(q))
+    final filtered =
+        (q.isEmpty
+                ? list
+                : list
+                      .where((x) => x.title.toLowerCase().contains(q))
+                      .toList(growable: false))
+            .where((x) => !(x.type == widget.fromType && x.id == widget.fromId))
             .toList(growable: false);
 
     return AlertDialog(
@@ -234,114 +386,49 @@ class _LinkedArticlesEditorDialogState
                     ),
                     const SizedBox(height: 12),
                     Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Card(
-                              elevation: 0,
-                              color: theme.colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.35),
-                              child: ListView.separated(
-                                itemCount: filtered.length,
-                                separatorBuilder: (_, __) =>
-                                    const Divider(height: 1),
-                                itemBuilder: (context, i) {
-                                  final it = filtered[i];
-                                  final selected = _isSelected(it.type, it.id);
-                                  return ListTile(
-                                    leading: (it.coverImageUrl ?? '')
-                                            .trim()
-                                            .isNotEmpty
-                                        ? ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: Image.network(
-                                              it.coverImageUrl!,
-                                              width: 40,
-                                              height: 40,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  const SizedBox(
-                                                width: 40,
-                                                height: 40,
-                                              ),
-                                            ),
-                                          )
-                                        : const SizedBox(
-                                            width: 40,
-                                            height: 40,
-                                          ),
-                                    title: Text(
-                                      it.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    trailing: selected
-                                        ? IconButton(
-                                            tooltip: 'Quitar',
-                                            onPressed: () {
-                                              final sel = _selected.firstWhere(
-                                                (x) =>
-                                                    x.type == it.type &&
-                                                    x.id == it.id,
-                                              );
-                                              _remove(sel);
-                                            },
-                                            icon: const Icon(Icons.close),
-                                          )
-                                        : FilledButton.tonalIcon(
-                                            onPressed: () => _add(it),
-                                            icon: const Icon(Icons.add),
-                                            label: const Text('Agregar'),
-                                          ),
-                                  );
-                                },
-                              ),
+                      child: isNarrow
+                          ? Column(
+                              children: [
+                                Expanded(
+                                  child: _AvailableList(filtered: filtered),
+                                ),
+                                const SizedBox(height: 12),
+                                Expanded(
+                                  child: _SelectedList(
+                                    selected: _selected,
+                                    onRemove: _remove,
+                                    onReorder: (oldIndex, newIndex) {
+                                      setState(() {
+                                        if (oldIndex < newIndex) newIndex -= 1;
+                                        final it = _selected.removeAt(oldIndex);
+                                        _selected.insert(newIndex, it);
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: _AvailableList(filtered: filtered),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _SelectedList(
+                                    selected: _selected,
+                                    onRemove: _remove,
+                                    onReorder: (oldIndex, newIndex) {
+                                      setState(() {
+                                        if (oldIndex < newIndex) newIndex -= 1;
+                                        final it = _selected.removeAt(oldIndex);
+                                        _selected.insert(newIndex, it);
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Card(
-                              elevation: 0,
-                              color: theme.colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.35),
-                              child: ReorderableListView.builder(
-                                itemCount: _selected.length,
-                                onReorder: (oldIndex, newIndex) {
-                                  setState(() {
-                                    if (oldIndex < newIndex) newIndex -= 1;
-                                    final it = _selected.removeAt(oldIndex);
-                                    _selected.insert(newIndex, it);
-                                  });
-                                },
-                                itemBuilder: (context, i) {
-                                  final it = _selected[i];
-                                  return ListTile(
-                                    key: ValueKey('${it.type}:${it.id}'),
-                                    leading: ReorderableDragStartListener(
-                                      index: i,
-                                      child: const Icon(Icons.drag_handle),
-                                    ),
-                                    title: Text(
-                                      it.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    subtitle: Text(it.type),
-                                    trailing: IconButton(
-                                      tooltip: 'Quitar',
-                                      onPressed: () => _remove(it),
-                                      icon: const Icon(Icons.close),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),
