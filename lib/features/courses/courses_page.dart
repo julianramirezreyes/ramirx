@@ -26,7 +26,7 @@ class CoursesPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       children: [
         Text(
-          'Capacitaciones',
+          'Formación técnica',
           style: Theme.of(
             context,
           ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -91,7 +91,7 @@ class _CourseTile extends ConsumerWidget {
       priceLabel: price,
       compareAtPriceLabel: compareAtPrice,
       badge: _LevelBadge(level: course.level),
-      onTap: () => context.go('/courses/${course.id}'),
+      onTap: () => context.go('/capacitaciones/${course.id}'),
       primaryActionLabel: 'Agregar',
       primaryAction: () async {
         await ref

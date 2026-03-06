@@ -12,6 +12,8 @@ import '../../features/products/products_page.dart';
 import '../../features/products/product_detail_page.dart';
 import '../../features/services/services_page.dart';
 import '../../features/services/service_detail_page.dart';
+import '../../features/static/about_page.dart';
+import '../../features/static/contact_page.dart';
 import '../../features/admin/admin_home_page.dart';
 import '../../features/admin/admin_services_page.dart';
 import '../../features/admin/admin_products_page.dart';
@@ -24,38 +26,47 @@ final routerProvider = Provider<GoRouter>((ref) {
   final auth = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/',
     routes: [
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
-          GoRoute(path: '/home', builder: (context, state) => const HomePage()),
+          GoRoute(path: '/', builder: (context, state) => const HomePage()),
+          GoRoute(path: '/home', redirect: (_, __) => '/'),
           GoRoute(
-            path: '/services',
+            path: '/servicios',
             builder: (context, state) => const ServicesPage(),
           ),
           GoRoute(
-            path: '/services/:id',
+            path: '/servicios/:id',
             builder: (context, state) =>
                 ServiceDetailPage(id: state.pathParameters['id']!),
           ),
           GoRoute(
-            path: '/products',
+            path: '/productos',
             builder: (context, state) => const ProductsPage(),
           ),
           GoRoute(
-            path: '/products/:id',
+            path: '/productos/:id',
             builder: (context, state) =>
                 ProductDetailPage(id: state.pathParameters['id']!),
           ),
           GoRoute(
-            path: '/courses',
+            path: '/capacitaciones',
             builder: (context, state) => const CoursesPage(),
           ),
           GoRoute(
-            path: '/courses/:id',
+            path: '/capacitaciones/:id',
             builder: (context, state) =>
                 CourseDetailPage(id: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/nosotros',
+            builder: (context, state) => const AboutPage(),
+          ),
+          GoRoute(
+            path: '/contacto',
+            builder: (context, state) => const ContactPage(),
           ),
           GoRoute(path: '/cart', builder: (context, state) => const CartPage()),
           GoRoute(
@@ -119,7 +130,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isAdminRoute) {
         if (!loggedIn) return '/login?next=$path';
-        if (!isAdmin) return '/home';
+        if (!isAdmin) return '/';
       }
 
       if (loggedIn && isAuthPage) {

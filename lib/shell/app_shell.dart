@@ -1,22 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/auth/auth_controller.dart';
 import '../features/cart/cart_controller.dart';
 import '../core/theme/theme_controller.dart';
+import '../core/config.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isSmall = MediaQuery.sizeOf(context).width < 720;
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  double _homeScrollT = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isSmall = width < 720;
+    final showCta = !isSmall && width >= 1080;
     final auth = ref.watch(authControllerProvider);
     final cart = ref.watch(cartControllerProvider);
+    final theme = Theme.of(context);
+
+    final uriPath = GoRouterState.of(context).uri.path;
+    final isHome = uriPath == '/';
+    final effectiveT = isHome ? _homeScrollT : 1.0;
+    final appBarBg = Color.lerp(
+      Colors.transparent,
+      theme.colorScheme.surface,
+      effectiveT,
+    )!;
+
+    Future<void> openExternal(Uri uri) async {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir el enlace')),
+        );
+      }
+    }
 
     return Scaffold(
+      extendBodyBehindAppBar: isHome,
       drawer: isSmall
           ? Drawer(
               child: SafeArea(
@@ -27,31 +58,55 @@ class AppShell extends ConsumerWidget {
                       title: const Text('Inicio'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.go('/home');
+                        context.go('/');
                       },
                     ),
                     ListTile(
                       title: const Text('Servicios'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.go('/services');
+                        context.go('/servicios');
                       },
                     ),
                     ListTile(
                       title: const Text('Productos'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.go('/products');
+                        context.go('/productos');
                       },
                     ),
                     ListTile(
                       title: const Text('Capacitaciones'),
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.go('/courses');
+                        context.go('/capacitaciones');
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Nosotros'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/nosotros');
+                      },
+                    ),
+                    ListTile(
+                      title: const Text('Contacto'),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/contacto');
                       },
                     ),
                     const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            openExternal(Uri.parse(AppConfig.whatsappUrl)),
+                        icon: const Icon(Icons.calendar_month),
+                        label: const Text('Agendar diagnóstico'),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     ListTile(
                       title: const Text('Carrito'),
                       onTap: () {
@@ -86,10 +141,13 @@ class AppShell extends ConsumerWidget {
       appBar: AppBar(
         titleSpacing: 16,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: appBarBg,
+        surfaceTintColor: Colors.transparent,
         title: Row(
           children: [
             InkWell(
-              onTap: () => context.go('/home'),
+              onTap: () => context.go('/'),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -102,22 +160,46 @@ class AppShell extends ConsumerWidget {
             ),
             if (!isSmall) ...[
               const SizedBox(width: 16),
-              _TopLink(
-                onPressed: () => context.go('/services'),
-                label: 'Servicios',
-              ),
-              _TopLink(
-                onPressed: () => context.go('/products'),
-                label: 'Productos',
-              ),
-              _TopLink(
-                onPressed: () => context.go('/courses'),
-                label: 'Capacitaciones',
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _TopLink(
+                        onPressed: () => context.go('/servicios'),
+                        label: 'Servicios',
+                      ),
+                      _TopLink(
+                        onPressed: () => context.go('/productos'),
+                        label: 'Productos',
+                      ),
+                      _TopLink(
+                        onPressed: () => context.go('/capacitaciones'),
+                        label: 'Capacitaciones',
+                      ),
+                      _TopLink(
+                        onPressed: () => context.go('/nosotros'),
+                        label: 'Nosotros',
+                      ),
+                      _TopLink(
+                        onPressed: () => context.go('/contacto'),
+                        label: 'Contacto',
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ],
         ),
         actions: [
+          if (showCta)
+            FilledButton.icon(
+              onPressed: () => openExternal(Uri.parse(AppConfig.whatsappUrl)),
+              icon: const Icon(Icons.calendar_month),
+              label: const Text('Agendar diagnóstico'),
+            ),
           if (!isSmall && auth.isAdmin)
             TextButton(
               onPressed: () => context.go('/admin'),
@@ -140,7 +222,21 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-      body: child,
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (!isHome) return false;
+          if (notification.metrics.axis != Axis.vertical) return false;
+
+          final t = (notification.metrics.pixels / 72).clamp(0.0, 1.0);
+          if (t == _homeScrollT) return false;
+
+          setState(() {
+            _homeScrollT = t;
+          });
+          return false;
+        },
+        child: widget.child,
+      ),
     );
   }
 }

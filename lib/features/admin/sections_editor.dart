@@ -6,10 +6,7 @@ class EditableSection {
   String title;
   List<String> bullets;
 
-  Map<String, dynamic> toJson() => {
-        'title': title,
-        'bullets': bullets,
-      };
+  Map<String, dynamic> toJson() => {'title': title, 'bullets': bullets};
 
   static List<EditableSection> fromDynamic(dynamic raw) {
     if (raw is! List) return [];
@@ -55,33 +52,58 @@ class _SectionsEditorState extends State<SectionsEditor> {
   @override
   void initState() {
     super.initState();
-    _sections = widget.initial.map((s) => EditableSection(title: s.title, bullets: [...s.bullets])).toList();
+    _sections = widget.initial
+        .map((s) => EditableSection(title: s.title, bullets: [...s.bullets]))
+        .toList();
   }
 
   void _emit() => widget.onChanged(_sections);
 
-  Future<void> _addSection() async {
-    final ctrl = TextEditingController();
+  Future<String?> _promptText({
+    required String title,
+    required String label,
+    String initialValue = '',
+    int maxLines = 1,
+    String okLabel = 'Guardar',
+  }) async {
+    final ctrl = TextEditingController(text: initialValue);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Nueva pestaña'),
+          title: Text(title),
           content: TextField(
             controller: ctrl,
-            decoration: const InputDecoration(labelText: 'Título'),
+            decoration: InputDecoration(labelText: label),
+            maxLines: maxLines,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Crear')),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(okLabel),
+            ),
           ],
         );
       },
     );
 
-    if (ok != true) return;
-    final title = ctrl.text.trim();
-    if (title.isEmpty) return;
+    if (ok != true) return null;
+    final value = ctrl.text.trim();
+    if (value.isEmpty) return null;
+    return value;
+  }
+
+  Future<void> _addSection() async {
+    final title = await _promptText(
+      title: 'Nueva pestaña',
+      label: 'Título',
+      okLabel: 'Crear',
+    );
+    if (title == null) return;
 
     setState(() {
       _sections.add(EditableSection(title: title, bullets: []));
@@ -89,29 +111,43 @@ class _SectionsEditorState extends State<SectionsEditor> {
     _emit();
   }
 
-  Future<void> _addBullet(int sectionIndex) async {
-    final ctrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Nueva viñeta'),
-          content: TextField(
-            controller: ctrl,
-            decoration: const InputDecoration(labelText: 'Texto'),
-            maxLines: 2,
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Agregar')),
-          ],
-        );
-      },
+  Future<void> _editSectionTitle(int sectionIndex) async {
+    final next = await _promptText(
+      title: 'Editar título',
+      label: 'Título',
+      initialValue: _sections[sectionIndex].title,
     );
+    if (next == null) return;
 
-    if (ok != true) return;
-    final text = ctrl.text.trim();
-    if (text.isEmpty) return;
+    setState(() {
+      _sections[sectionIndex].title = next;
+    });
+    _emit();
+  }
+
+  Future<void> _editBullet(int sectionIndex, int bulletIndex) async {
+    final next = await _promptText(
+      title: 'Editar viñeta',
+      label: 'Texto',
+      maxLines: 2,
+      initialValue: _sections[sectionIndex].bullets[bulletIndex],
+    );
+    if (next == null) return;
+
+    setState(() {
+      _sections[sectionIndex].bullets[bulletIndex] = next;
+    });
+    _emit();
+  }
+
+  Future<void> _addBullet(int sectionIndex) async {
+    final text = await _promptText(
+      title: 'Nueva viñeta',
+      label: 'Texto',
+      maxLines: 2,
+      okLabel: 'Agregar',
+    );
+    if (text == null) return;
 
     setState(() {
       _sections[sectionIndex].bullets.add(text);
@@ -126,7 +162,12 @@ class _SectionsEditorState extends State<SectionsEditor> {
       children: [
         Row(
           children: [
-            Text('Pestañas y viñetas', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+            Text(
+              'Pestañas y viñetas',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
             const Spacer(),
             FilledButton.tonalIcon(
               onPressed: _addSection,
@@ -139,7 +180,9 @@ class _SectionsEditorState extends State<SectionsEditor> {
         if (_sections.isEmpty)
           Text(
             'No hay pestañas aún.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           )
         else
           Card(
@@ -148,7 +191,21 @@ class _SectionsEditorState extends State<SectionsEditor> {
               children: [
                 for (int i = 0; i < _sections.length; i++)
                   ExpansionTile(
-                    title: Text(_sections[i].title, style: const TextStyle(fontWeight: FontWeight.w900)),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _sections[i].title,
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Editar título',
+                          onPressed: () => _editSectionTitle(i),
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
+                      ],
+                    ),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     children: [
                       Align(
@@ -163,10 +220,12 @@ class _SectionsEditorState extends State<SectionsEditor> {
                       if (_sections[i].bullets.isEmpty)
                         Text(
                           'Sin viñetas.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         )
                       else
                         for (int b = 0; b < _sections[i].bullets.length; b++)
@@ -185,6 +244,7 @@ class _SectionsEditorState extends State<SectionsEditor> {
                               },
                               icon: const Icon(Icons.delete_outline),
                             ),
+                            onTap: () => _editBullet(i, b),
                           ),
                       const SizedBox(height: 4),
                       Row(

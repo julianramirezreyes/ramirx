@@ -255,10 +255,6 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                   Text(p.description!, style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 16),
                 ],
-                if (isDesktop) ...[
-                  SectionsView(sections: sections),
-                  const SizedBox(height: 16),
-                ],
                 if (isDesktop &&
                     (p.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   HtmlWidget(p.descriptionHtml!),
@@ -307,7 +303,11 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [ctaCard(isDesktop: true)],
+                                  children: [
+                                    ctaCard(isDesktop: true),
+                                    const SizedBox(height: 12),
+                                    SectionsView(sections: sections),
+                                  ],
                                 ),
                               ),
                             ],

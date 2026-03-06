@@ -3,6 +3,15 @@ import 'package:go_router/go_router.dart';
 import '../../core/config.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+Future<void> _openExternal(BuildContext context, Uri uri) async {
+  final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('No se pudo abrir el enlace')));
+  }
+}
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -11,6 +20,7 @@ class HomePage extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final isSmall = width < 900;
     final primary = Theme.of(context).colorScheme.primary;
+    final topInset = MediaQuery.paddingOf(context).top + kToolbarHeight;
 
     return SingleChildScrollView(
       child: Column(
@@ -28,10 +38,7 @@ class HomePage extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1100),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 28,
-                  ),
+                  padding: EdgeInsets.fromLTRB(20, 28 + topInset, 20, 28),
                   child: isSmall ? _HeroStacked() : const _HeroWide(),
                 ),
               ),
@@ -49,162 +56,182 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Si su negocio depende de Excel o de un sistema que no se adapta, está perdiendo control.',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Muchos comercios operan con Excel saturado, procesos manuales y sistemas genéricos que no reflejan su operación real. Su negocio es único. Su sistema también debería serlo.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    _Section(
+                      title:
+                          'Muchos negocios trabajan con herramientas que no fueron diseñadas para ellos.',
+                      body:
+                          'Es común encontrar empresas que gestionan sus operaciones mediante hojas de cálculo improvisadas o sistemas genéricos que no se adaptan a sus procesos reales. Esto genera errores, retrabajo, pérdida de información y dependencia constante de soluciones externas que no responden a las necesidades del negocio.',
+                      child: const _CardGrid(
+                        children: [
+                          _InfoCard(
+                            title: 'Procesos gestionados en Excel',
+                            text:
+                                'Operación frágil, propensa a errores y difícil de auditar.',
+                          ),
+                          _InfoCard(
+                            title: 'Sistemas genéricos con limitaciones',
+                            text:
+                                'La herramienta manda, el negocio se adapta y pierde eficiencia.',
+                          ),
+                          _InfoCard(
+                            title: 'Falta de soporte técnico real',
+                            text:
+                                'Cambios lentos, dependencia de terceros y decisiones a ciegas.',
+                          ),
+                          _InfoCard(
+                            title: 'Procesos manuales repetitivos',
+                            text:
+                                'Retrabajo constante y costos ocultos por tiempo operativo.',
+                          ),
+                          _InfoCard(
+                            title: 'Información dispersa',
+                            text:
+                                'Datos fragmentados que impiden reportes confiables y oportunos.',
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 18),
-
-                    _CardGrid(
-                      children: const [
-                        _InfoCard(
-                          title: 'Problemas típicos',
-                          text:
-                              'Excel propenso a errores, procesos manuales y dependencia de terceros para cualquier cambio.',
-                        ),
-                        _InfoCard(
-                          title: 'La propuesta RAMIRX',
-                          text:
-                              'Desarrollo a la medida + infraestructura cloud gestionada + soporte correctivo/evolutivo.',
-                        ),
-                        _InfoCard(
-                          title: 'Sin costos ocultos',
-                          text:
-                              'Modelo anual. Sin licencias genéricas. Sin servidores que administrar. Sin sorpresas técnicas.',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 22),
-                    Text(
-                      'Desarrollamos infraestructura digital personalizada para su negocio.',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'No vendemos licencias mensuales genéricas. Diseñamos su sistema y lo operamos por usted.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 24),
+                    _Section(
+                      title:
+                          'Diseñamos sistemas que se adaptan a su negocio, no al revés.',
+                      body:
+                          'En RAMIRX desarrollamos soluciones tecnológicas precisas que se ajustan a la forma en que opera cada organización. Nuestro enfoque combina ingeniería de software, infraestructura tecnológica y soporte continuo para ofrecer sistemas confiables y escalables.',
+                      child: const _CardGrid(
+                        children: [
+                          _InfoCard(
+                            title: 'Desarrollo personalizado',
+                            text:
+                                'Cada sistema se diseña según los procesos específicos del cliente.',
+                          ),
+                          _InfoCard(
+                            title: 'Arquitectura técnica sólida',
+                            text:
+                                'Software estable, mantenible y escalable para operar sin fricción.',
+                          ),
+                          _InfoCard(
+                            title: 'Infraestructura incluida',
+                            text:
+                                'Sin preocuparse por servidores, bases de datos o mantenimiento técnico.',
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    _CardGrid(
-                      children: const [
-                        _InfoCard(
-                          title: 'Incluye',
-                          text:
-                              'Desarrollo a la medida, infraestructura cloud gestionada (BD + backups), soporte correctivo y evolutivo.',
-                        ),
-                        _InfoCard(
-                          title: 'Integraciones',
-                          text:
-                              'Integración con facturación electrónica DIAN y automatizaciones.',
-                        ),
-                        _InfoCard(
-                          title: 'Capacitación',
-                          text:
-                              'Capacitación incluida para que su equipo opere sin fricción.',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-                    _Banner(
-                      title: '¿Cómo funciona?',
-                      text:
-                          '1) Diagnóstico estratégico. 2) Propuesta técnica. 3) Desarrollo por módulos. 4) Operación y soporte.',
-                      primaryLabel: 'Agendar ahora',
-                      secondaryLabel: 'WhatsApp',
-                      onPrimary: () => _openExternal(
-                        context,
-                        Uri.parse(AppConfig.bookingUrl),
-                      ),
-                      onSecondary: () => _openExternal(
-                        context,
-                        Uri.parse(AppConfig.whatsappUrl),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-                    Text(
-                      'Casos de aplicación',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 14),
-                    _CardGrid(
-                      children: const [
-                        _InfoCard(
-                          title: 'Comercio minorista',
-                          text:
-                              'Inventario en tiempo real, control de ventas, reportes automáticos.',
-                        ),
-                        _InfoCard(
-                          title: 'Empresa de servicios',
-                          text:
-                              'Gestión de clientes, contratos, facturación automática e indicadores.',
-                        ),
-                        _InfoCard(
-                          title: 'Negocio en crecimiento',
-                          text:
-                              'Multiusuario, acceso remoto y escalabilidad preparada.',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-                    Text(
-                      '¿Por qué RAMIRX?',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'No somos software genérico. No somos un freelance que desaparece. No somos una licencia sin soporte. Somos un estudio especializado en ingeniería de software: precisión técnica, arquitectura escalable, transparencia contractual y relación a largo plazo.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 24),
+                    _Section(
+                      title: 'Tres formas de trabajar con RAMIRX',
+                      child: _CardGrid(
+                        children: [
+                          _LineCard(
+                            title: 'Servicios',
+                            text:
+                                'Desarrollo de software personalizado para empresas y negocios que necesitan soluciones digitales adaptadas a sus procesos.',
+                            bullets: const [
+                              'Sistemas empresariales',
+                              'Automatización de procesos',
+                              'Aplicaciones web',
+                              'Infraestructura incluida',
+                            ],
+                            ctaLabel: 'Explorar servicios',
+                            onPressed: () => context.go('/servicios'),
+                          ),
+                          _LineCard(
+                            title: 'Productos',
+                            text:
+                                'Software y herramientas digitales diseñadas para resolver necesidades específicas de gestión, productividad o automatización.',
+                            bullets: const [
+                              'Aplicaciones listas para usar',
+                              'Herramientas especializadas',
+                              'Utilidades empresariales',
+                            ],
+                            ctaLabel: 'Ver productos',
+                            onPressed: () => context.go('/productos'),
+                          ),
+                          _LineCard(
+                            title: 'Capacitaciones',
+                            text:
+                                'Formación técnica enfocada en desarrollo de software, arquitectura de sistemas y habilidades tecnológicas aplicadas.',
+                            bullets: const [
+                              'Cursos técnicos',
+                              'Formación en programación',
+                              'Ingeniería de software',
+                            ],
+                            ctaLabel: 'Ver capacitaciones',
+                            onPressed: () => context.go('/capacitaciones'),
+                          ),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(height: 18),
-                    Text(
-                      'Modelo de inversión',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Planes anuales desde \$1.800.000 COP – \$2.400.000 COP. Incluye desarrollo inicial, infraestructura, soporte, mantenimiento y actualizaciones. Sin pagos mensuales variables.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 24),
+                    _Section(
+                      title: 'Cómo trabajamos',
+                      child: _CardGrid(
+                        children: const [
+                          _StepCard(
+                            n: 1,
+                            title: 'Diagnóstico',
+                            text:
+                                'Analizamos el funcionamiento del negocio y los procesos a mejorar.',
+                          ),
+                          _StepCard(
+                            n: 2,
+                            title: 'Diseño de solución',
+                            text:
+                                'Se define una arquitectura técnica adecuada para el problema.',
+                          ),
+                          _StepCard(
+                            n: 3,
+                            title: 'Desarrollo',
+                            text:
+                                'Construcción del sistema mediante módulos iterativos.',
+                          ),
+                          _StepCard(
+                            n: 4,
+                            title: 'Implementación',
+                            text:
+                                'Despliegue del sistema y capacitación del cliente.',
+                          ),
+                          _StepCard(
+                            n: 5,
+                            title: 'Soporte',
+                            text:
+                                'Mantenimiento técnico y evolución del sistema.',
+                          ),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 24),
+                    _Section(
+                      title: 'Precisión en cada sistema',
+                      body:
+                          'El software que gestiona un negocio no debe ser improvisado. En RAMIRX creemos que las soluciones tecnológicas deben diseñarse con rigor técnico, claridad arquitectónica y un profundo entendimiento del problema que buscan resolver.',
+                      child: const Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          _Pill('Precisión'),
+                          _Pill('Responsabilidad'),
+                          _Pill('Transparencia'),
+                          _Pill('Innovación'),
+                          _Pill('Ética profesional'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     _Banner(
                       title:
-                          'Agende una evaluación gratuita y reciba un diagnóstico técnico sin compromiso.',
+                          'Si su negocio necesita un sistema diseñado para su realidad, podemos construirlo.',
                       text:
-                          'Si su software actual le genera más problemas que soluciones, es momento de cambiar.',
-                      primaryLabel: 'Agendar ahora',
-                      secondaryLabel: 'Contactar por WhatsApp',
+                          'Contáctenos para analizar su caso y evaluar la mejor solución tecnológica para su organización.',
+                      primaryLabel: 'Contactar por WhatsApp',
+                      secondaryLabel: 'Enviar correo',
                       onPrimary: () => _openExternal(
                         context,
-                        Uri.parse(AppConfig.bookingUrl),
+                        Uri.parse(AppConfig.whatsappUrl),
                       ),
                       onSecondary: () => _openExternal(
                         context,
-                        Uri.parse(AppConfig.whatsappUrl),
+                        Uri.parse('mailto:ramirexdev@gmail.com'),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -250,16 +277,12 @@ class HomePage extends StatelessWidget {
                         spacing: 10,
                         children: [
                           TextButton(
-                            onPressed: () => context.go('/products'),
+                            onPressed: () => context.go('/productos'),
                             child: const Text('Productos'),
                           ),
                           TextButton(
-                            onPressed: () => context.go('/courses'),
+                            onPressed: () => context.go('/capacitaciones'),
                             child: const Text('Capacitaciones'),
-                          ),
-                          TextButton(
-                            onPressed: () => context.go('/cart'),
-                            child: const Text('Carrito'),
                           ),
                         ],
                       ),
@@ -273,14 +296,177 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Future<void> _openExternal(BuildContext context, Uri uri) async {
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el enlace')),
-      );
-    }
+class _Section extends StatelessWidget {
+  const _Section({required this.title, this.body, this.child});
+
+  final String title;
+  final String? body;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        if ((body ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            body!,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              height: 1.45,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+        if (child != null) ...[const SizedBox(height: 14), child!],
+      ],
+    );
+  }
+}
+
+class _LineCard extends StatelessWidget {
+  const _LineCard({
+    required this.title,
+    required this.text,
+    required this.bullets,
+    required this.ctaLabel,
+    required this.onPressed,
+  });
+
+  final String title;
+  final String text;
+  final List<String> bullets;
+  final String ctaLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = theme.colorScheme.outlineVariant;
+    final surface = theme.colorScheme.surface;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.35,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final b in bullets)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('•  '),
+                  Expanded(
+                    child: Text(
+                      b,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.3,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonal(
+              onPressed: onPressed,
+              child: Text(ctaLabel),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({required this.n, required this.title, required this.text});
+
+  final int n;
+  final String title;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = theme.colorScheme.outlineVariant;
+    final surface = theme.colorScheme.surface;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'Paso $n',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.35,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -319,7 +505,7 @@ class _HeroText extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Software a la medida para comercios que quieren crecer sin depender de sistemas genéricos.',
+          'Software diseñado exactamente para la forma en que funciona su negocio.',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w900,
             height: 1.15,
@@ -327,7 +513,7 @@ class _HeroText extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Diseñamos e implementamos soluciones digitales personalizadas con infraestructura incluida, soporte continuo e integración con facturación electrónica. Usted se enfoca en vender. Nosotros nos encargamos del sistema.',
+          'RAMIRX es un estudio de ingeniería de software que desarrolla soluciones digitales personalizadas, productos tecnológicos y formación técnica para empresas y profesionales que necesitan herramientas realmente adaptadas a sus procesos.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.35,
@@ -339,18 +525,15 @@ class _HeroText extends StatelessWidget {
           runSpacing: 12,
           children: [
             FilledButton(
-              onPressed: () => launchUrl(
-                Uri.parse(AppConfig.bookingUrl),
-                mode: LaunchMode.externalApplication,
-              ),
-              child: const Text('Agendar diagnóstico gratuito'),
+              onPressed: () => context.go('/servicios'),
+              child: const Text('Explorar servicios'),
             ),
             OutlinedButton(
               onPressed: () => launchUrl(
                 Uri.parse(AppConfig.whatsappUrl),
                 mode: LaunchMode.externalApplication,
               ),
-              child: const Text('Hablar por WhatsApp'),
+              child: const Text('Contactar'),
             ),
           ],
         ),

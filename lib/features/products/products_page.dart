@@ -26,7 +26,7 @@ class ProductsPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       children: [
         Text(
-          'Productos',
+          'Software y herramientas',
           style: Theme.of(
             context,
           ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -90,7 +90,7 @@ class _ProductTile extends ConsumerWidget {
       placeholderIcon: Icons.inventory_2_outlined,
       priceLabel: price,
       compareAtPriceLabel: compareAtPrice,
-      onTap: () => context.go('/products/${product.id}'),
+      onTap: () => context.go('/productos/${product.id}'),
       primaryActionLabel: 'Agregar',
       primaryAction: () async {
         await ref

@@ -26,7 +26,7 @@ class ServicesPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       children: [
         Text(
-          'Servicios',
+          'Servicios de ingeniería de software',
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -72,7 +72,7 @@ class ServicesPage extends ConsumerWidget {
                   compareAtPriceLabel: (compareAt ?? '').trim().isNotEmpty
                       ? 'Antes: $compareAt'
                       : null,
-                  onTap: () => context.go('/services/${s.id}'),
+                  onTap: () => context.go('/servicios/${s.id}'),
                 );
               },
             );

@@ -228,10 +228,6 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                   Text(c.description!, style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 16),
                 ],
-                if (isDesktop) ...[
-                  SectionsView(sections: sections),
-                  const SizedBox(height: 16),
-                ],
                 if (isDesktop &&
                     (c.descriptionHtml ?? '').trim().isNotEmpty) ...[
                   HtmlWidget(c.descriptionHtml!),
@@ -280,7 +276,11 @@ class _CourseDetailPageState extends ConsumerState<CourseDetailPage> {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [ctaCard(isDesktop: true)],
+                                  children: [
+                                    ctaCard(isDesktop: true),
+                                    const SizedBox(height: 12),
+                                    SectionsView(sections: sections),
+                                  ],
                                 ),
                               ),
                             ],

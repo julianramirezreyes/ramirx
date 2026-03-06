@@ -219,10 +219,6 @@ class ServiceDetailPage extends ConsumerWidget {
                   Text(s.description!, style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 16),
                 ],
-                if (isDesktop) ...[
-                  SectionsView(sections: sections),
-                  const SizedBox(height: 16),
-                ],
                 if (!isDesktop) ...[
                   SectionsView(sections: sections),
                   const SizedBox(height: 16),
@@ -275,7 +271,11 @@ class ServiceDetailPage extends ConsumerWidget {
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
-                                  children: [ctaCard(isDesktop: true)],
+                                  children: [
+                                    ctaCard(isDesktop: true),
+                                    const SizedBox(height: 12),
+                                    SectionsView(sections: sections),
+                                  ],
                                 ),
                               ),
                             ],
